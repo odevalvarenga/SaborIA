@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from pydantic import BaseModel, Field
 from typing import List
 
+from services.gemini_service import generate_recipe
+
 
 app = FastAPI(
     title="SaborIA",
@@ -37,6 +39,14 @@ class RecipeRequest(BaseModel):
     )
 
 
+class RecipeResponse(BaseModel):
+    nome: str
+    tempo_preparo: int
+    dificuldade: str
+    ingredientes: List[str]
+    modo_preparo: List[str]
+
+
 @app.get("/api/health")
 def health_check():
     return {
@@ -47,10 +57,17 @@ def health_check():
 
 @app.post("/api/recipes")
 def create_recipe(request: RecipeRequest):
+
+    recipe = generate_recipe(
+        ingredients=request.ingredients,
+        meal=request.meal,
+        difficulty=request.difficulty,
+        max_time=request.max_time
+    )
+
+    validated_recipe = RecipeResponse(**recipe)
+
     return {
-        "message": "Dados recebidos com sucesso!",
-        "ingredients": request.ingredients,
-        "meal": request.meal,
-        "difficulty": request.difficulty,
-        "max_time": request.max_time
+        "message": "Receita gerada com sucesso!",
+        "recipe": validated_recipe
     }
