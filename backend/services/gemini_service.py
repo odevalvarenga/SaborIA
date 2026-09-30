@@ -5,6 +5,11 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai.errors import ServerError
 
+class AIServiceUnavailableError(Exception):
+    pass
+
+class AIInvalidResponseError(Exception):
+    pass
 
 load_dotenv()
 
@@ -133,9 +138,9 @@ def generate_recipe(
                 f"Erro no modelo de fallback: {fallback_error}"
             )
 
-            raise RuntimeError(
-                "O serviço de Inteligência Artificial está "
-                "temporariamente indisponível."
+            raise AIServiceUnavailableError(
+    "O serviço de Inteligência Artificial está "
+    "temporariamente indisponível."
             ) from fallback_error
 
     try:
@@ -146,7 +151,7 @@ def generate_recipe(
         print("A IA retornou um conteúdo que não é JSON válido.")
         print(response_text)
 
-        raise RuntimeError(
-            "A Inteligência Artificial retornou uma resposta "
-            "em formato inválido."
-        ) from error
+        raise AIInvalidResponseError(
+    "A Inteligência Artificial retornou uma resposta "
+    "em formato inválido."
+) from error

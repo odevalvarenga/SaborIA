@@ -1,8 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from typing import List
 
-from services.gemini_service import generate_recipe
+from services.gemini_service import (
+    generate_recipe,
+    AIServiceUnavailableError,
+    AIInvalidResponseError
+)
 
 
 app = FastAPI(
@@ -58,16 +62,29 @@ def health_check():
 @app.post("/api/recipes")
 def create_recipe(request: RecipeRequest):
 
-    recipe = generate_recipe(
-        ingredients=request.ingredients,
-        meal=request.meal,
-        difficulty=request.difficulty,
-        max_time=request.max_time
-    )
+    try:
+        recipe = generate_recipe(
+            ingredients=request.ingredients,
+            meal=request.meal,
+            difficulty=request.difficulty,
+            max_time=request.max_time
+        )
 
-    validated_recipe = RecipeResponse(**recipe)
+        validated_recipe = RecipeResponse(**recipe)
 
-    return {
-        "message": "Receita gerada com sucesso!",
-        "recipe": validated_recipe
-    }
+        return {
+            "message": "Receita gerada com sucesso!",
+            "recipe": validated_recipe
+        }
+
+    except AIServiceUnavailableError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=str(error)
+        )
+
+    except AIInvalidResponseError as error:
+        raise HTTPException(
+            status_code=502,
+            detail=str(error)
+        )
